@@ -19,7 +19,12 @@ This allows you to use the official extension without restrictions, purely by mo
     ```bash
     node patch-auto-accept.js
     ```
-    The script will automatically locate the extension in your `~/.vscode/extensions` folder and apply the patch.
+    The script will automatically search for the extension in:
+    - `~/.vscode/extensions`
+    - `~/.antigravity/extensions`
+    - `~/.cursor/extensions`
+    
+    It will find the latest version and apply the patch.
 3.  **Restart VS Code**: Reload the window or restart the IDE for changes to take effect.
 
 ## Features Unlocked
