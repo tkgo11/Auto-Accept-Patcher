@@ -18,25 +18,37 @@ function error(msg) {
 }
 
 function findExtensionPath() {
-    const vscodeExtensionsDir = path.join(os.homedir(), '.vscode', 'extensions');
-    if (!fs.existsSync(vscodeExtensionsDir)) {
-        error(`VS Code extensions directory not found at: ${vscodeExtensionsDir}`);
+    const home = os.homedir();
+    const possiblePaths = [
+        path.join(home, '.vscode', 'extensions'),
+        path.join(home, '.antigravity', 'extensions'),
+        path.join(home, '.cursor', 'extensions')
+    ];
+
+    let targetDir = null;
+
+    for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+            log(`Checking extensions dir: ${p}`);
+            const extensions = fs.readdirSync(p);
+            const candidates = extensions.filter(dir =>
+                dir.toLowerCase().startsWith(`${EXTENSION_PUBLISHER}.${EXTENSION_NAME}`.toLowerCase())
+            ).sort();
+
+            if (candidates.length > 0) {
+                targetDir = path.join(p, candidates[candidates.length - 1]);
+                log(`Found extension in: ${p}`);
+                break;
+            }
+        }
     }
 
-    const extensions = fs.readdirSync(vscodeExtensionsDir);
-    // Find directory starting with 'munkhin.auto-accept-agent-'
-    // We want the latest version if multiple exist (though VS Code usually keeps one)
-    const candidates = extensions.filter(dir => 
-        dir.toLowerCase().startsWith(`${EXTENSION_PUBLISHER}.${EXTENSION_NAME}`.toLowerCase())
-    ).sort(); // Sort to get latest version last if semantic naming is used
-
-    if (candidates.length === 0) {
-        error(`Extension not found. Please install the official Auto Accept Agent extension first.`);
+    if (!targetDir) {
+        error(`Extension not found in standard locations (.vscode, .antigravity, .cursor). Please install the official Auto Accept Agent extension first.`);
     }
 
-    const latest = candidates[candidates.length - 1];
-    log(`Found extension: ${latest}`);
-    return path.join(vscodeExtensionsDir, latest);
+    log(`Target extension path: ${targetDir}`);
+    return targetDir;
 }
 
 function patchFile(filePath) {
@@ -45,7 +57,7 @@ function patchFile(filePath) {
     }
 
     const originalContent = fs.readFileSync(filePath, 'utf8');
-    
+
     // Check if already patched
     if (originalContent.includes('// PATCHED BY AUTO ACCEPT PATCHER')) {
         log('Extension appears to be already patched.');
@@ -113,13 +125,13 @@ function patchFile(filePath) {
 function main() {
     try {
         log('Starting patch process...');
-        
+
         let extensionPath = process.argv[2];
-        
+
         if (!extensionPath) {
             extensionPath = findExtensionPath();
         } else {
-             log(`Using provided path: ${extensionPath}`);
+            log(`Using provided path: ${extensionPath}`);
         }
 
         const targetFilePath = path.join(extensionPath, TARGET_FILE); // extension/dist/extension.js
@@ -136,7 +148,7 @@ function main() {
         // Wait, 'vsce package' packages the files listed in package.json or everything.
         // If my repo has `extension/package.json`, then `extension` is the root of the vsix content.
         // So `dist/extension.js` should be at `${installDir}/dist/extension.js`.
-        
+
         patchFile(targetFilePath);
 
     } catch (e) {
