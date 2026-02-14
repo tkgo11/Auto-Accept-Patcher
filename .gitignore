@@ -1,0 +1,39 @@
+# Environment
+.env
+
+# Dependencies
+node_modules/
+extension/node_modules/
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build artifacts
+out/
+dist/
+extension/dist/
+
+# Tests
+.vscode-test/
+coverage/
+.nyc_output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code extension package
+*.vsix
+
+# Editor specific
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Original ignores (preserved just in case)
+extension/main_scripts/background_mode.js
