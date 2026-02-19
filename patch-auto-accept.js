@@ -69,8 +69,8 @@ function patchFile(filePath) {
     let modified = false;
 
     // 1. Force isPro() to return true
-    // Matches: isPro() { ... } or isPro(){ ... }
-    const isProRegex = /(isPro\s*\([^)]*\)\s*\{)/g;
+    // Matches: function isPro() { ... } or isPro() { ... }
+    const isProRegex = /((?:function\s+)?isPro\s*\([^)]*\)\s*\{)/g;
     if (isProRegex.test(patchedContent)) {
         patchedContent = patchedContent.replace(isProRegex, '$1 return true; ');
         log('Patched: isPro() -> true');
@@ -80,14 +80,22 @@ function patchFile(filePath) {
     }
 
     // 2. Stub checkProStatus to return true immediately
-    // Matches: async checkProStatus(userId) { ... }
-    const checkProRegex = /(async\s+checkProStatus\s*\([^)]*\)\s*\{)/g;
+    // Matches: async checkProStatus(...) or checkProStatus(...)
+    const checkProRegex = /((?:async\s+)?(?:function\s+)?checkProStatus\s*\([^)]*\)\s*\{)/g;
     if (checkProRegex.test(patchedContent)) {
         patchedContent = patchedContent.replace(checkProRegex, '$1 return Promise.resolve(true); ');
         log('Patched: checkProStatus() -> true');
         modified = true;
     } else {
         log('Warning: checkProStatus() method not found.');
+    }
+
+    // 2b. Stub verifyLicense (internal) just in case
+    const verifyLicenseRegex = /((?:async\s+)?(?:function\s+)?verifyLicense\s*\([^)]*\)\s*\{)/g;
+    if (verifyLicenseRegex.test(patchedContent)) {
+        patchedContent = patchedContent.replace(verifyLicenseRegex, '$1 return Promise.resolve(true); ');
+        log('Patched: verifyLicense() -> true');
+        modified = true;
     }
 
     // 3. Disable showUpgradePrompt
